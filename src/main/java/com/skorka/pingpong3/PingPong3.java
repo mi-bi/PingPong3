@@ -7,6 +7,8 @@ package com.skorka.pingpong3;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.Timer;
+import java.util.TimerTask;
 import javax.websocket.DeploymentException;
 import org.glassfish.tyrus.client.ClientManager;
 import org.glassfish.tyrus.client.ClientProperties;
@@ -16,7 +18,15 @@ import org.glassfish.tyrus.client.ClientProperties;
  * @author Michal Bialoskorski
  */
 public class PingPong3 {
-
+    private static Timer timer;
+    private static class Abort extends TimerTask {
+        @Override
+        public void run() {
+            System.out.println("Czas uplynal");
+            timer.cancel();
+            System.exit(0);
+        }
+    }
     // 3000ms for create_session 
     private static int session_timeout = 3000;
     // 5000ms for handshake websocket
@@ -35,7 +45,7 @@ public class PingPong3 {
                 ClientManager cm = ClientManager.createClient();
                 // 5 sek. na polaczenie
                 cm.getProperties().put(ClientProperties.HANDSHAKE_TIMEOUT, handshake_timeout);
-
+                
                 System.out.println("Lacze sie z " + uri);
                 cm.connectToServer(WSClient.class, uri);
                 retry = -2;
@@ -82,9 +92,14 @@ public class PingPong3 {
             phelp();
             return;
         }
+        // Ustawia wylaczenie na 5sek
+        timer = new Timer();
+        timer.schedule(new Abort(), 5000);
+  
         String address = "ws://" + args[0] + ":" + args[1] + "/";
         System.out.println("ustawiam adres na:" + address);
         URI uri = URI.create(address);
+        
         try {
             connect(3, uri);
         } catch (PingPongException ex) {
