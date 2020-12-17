@@ -73,6 +73,7 @@ public class WSClient {
             session.getBasicRemote().sendText(msg);
             session_ws = session;
             connected = true;
+            System.err.println("polaczylem");
         } catch (IOException ex) {
             Logger.getLogger(WSClient.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -127,7 +128,7 @@ public class WSClient {
      *
      * @return new trnasaction_id
      */
-    private static int get_next_transaction_id() {
+    private int get_next_transaction_id() {
         transaction_id++;
         current_transaction = transaction_id;
         transaction_status = 0;
@@ -139,7 +140,7 @@ public class WSClient {
      *
      * @throws IOException
      */
-    public static void close() throws IOException {
+    public void close() throws IOException {
         session_id = -1;
         if (session_ws != null && session_ws.isOpen()) {
             session_ws.close();
@@ -153,7 +154,7 @@ public class WSClient {
      * @throws com.skorka.pingpong3.PingPongException
      *
      */
-    public static void wait_for_session(int timeout) throws PingPongException {
+    public void wait_for_session(int timeout) throws PingPongException {
         int t = timeout;
         int dt = timeout / 10;
         if (dt > 100) {
@@ -178,7 +179,7 @@ public class WSClient {
      * @param timeout
      * @throws PingPongException
      */
-    public static void wait_for_connection(int timeout) throws PingPongException {
+    public void wait_for_connection(int timeout) throws PingPongException {
         int t = timeout;
         int dt = timeout / 10;
         if (dt > 100) {
@@ -203,7 +204,7 @@ public class WSClient {
      * @param interval of ping requests
      * @throws PingPongException
      */
-    public static void ping(int interval) throws PingPongException {
+    public void ping(int interval) throws PingPongException {
         JSONObject req = new JSONObject();
         req.put("request", "ping");
         req.put("session_id", session_id);
