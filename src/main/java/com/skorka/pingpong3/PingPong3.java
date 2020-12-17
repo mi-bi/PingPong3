@@ -18,19 +18,15 @@ import org.glassfish.tyrus.client.ClientProperties;
  * @author Michal Bialoskorski
  */
 public class PingPong3 {
-    private static Timer timer;
-    private static class Abort extends TimerTask {
-        @Override
-        public void run() {
-            System.out.println("Czas uplynal");
-            timer.cancel();
-            System.exit(0);
-        }
-    }
+    
+    // 5000ms for connection attempt
+    private static int connection_timeout = 5000;
     // 3000ms for create_session 
     private static int session_timeout = 3000;
     // 5000ms for handshake websocket
-    private static int handshake_timeout = 5000;
+    private static int handshake_timeout = 1000;
+    // 3000ms ping interval
+    private static int ping_interval = 3000;
 /**
  * Makes connection to WS server
  * @param retries number of additional retries
@@ -47,13 +43,14 @@ public class PingPong3 {
                 cm.getProperties().put(ClientProperties.HANDSHAKE_TIMEOUT, handshake_timeout);
                 
                 System.out.println("Lacze sie z " + uri);
-                cm.connectToServer(WSClient.class, uri);
+                cm.asyncConnectToServer(WSClient.class, uri);
+                WSClient.wait_for_connection(connection_timeout);
                 retry = -2;
 
-            } catch (DeploymentException | IOException ex) {
+            } catch (DeploymentException | PingPongException ex ) {
                 System.out.println("Problemy z nawiazaniem polaczenia");
                 retry--;
-            }
+            }       
         }
         if (retry == -1) {
             System.out.println("Nie udalo sie polaczyc");
@@ -63,7 +60,7 @@ public class PingPong3 {
         retry = 3;
         while (retry >= 0) {
             try {
-                WSClient.wait_for_session(3000);
+                WSClient.wait_for_session(session_timeout);
                 retry = -2;
             } catch (PingPongException ex) {
                 System.out.println(ex);
@@ -92,9 +89,6 @@ public class PingPong3 {
             phelp();
             return;
         }
-        // Ustawia wylaczenie na 5sek
-        timer = new Timer();
-        timer.schedule(new Abort(), 5000);
   
         String address = "ws://" + args[0] + ":" + args[1] + "/";
         System.out.println("ustawiam adres na:" + address);
@@ -103,13 +97,14 @@ public class PingPong3 {
         try {
             connect(3, uri);
         } catch (PingPongException ex) {
-            System.out.println(ex);
+            System.out.println(ex.toString());
             return;
         }
+        
         int retry = 1;
         while (retry >= 0) {
             try {
-                WSClient.ping(3000);
+                WSClient.ping(ping_interval);
                 retry = -2;
             } catch (PingPongException e) {
                 System.out.println(e.toString());
