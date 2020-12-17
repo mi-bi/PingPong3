@@ -2,6 +2,7 @@ package com.skorka.pingpong3;
 
 /**
  * WebSocket Client
+ *
  * @author Michal Bialoskorski
  */
 import java.io.IOException;
@@ -36,6 +37,8 @@ public class WSClient {
     private static Session session_ws = null;
     // main loop condition
     private static boolean do_ping_loop = true;
+    // true after connection, before create_session request
+    private static boolean connected = false;
 
     // 0 no error
     // != 0 error
@@ -43,10 +46,19 @@ public class WSClient {
 
     /**
      * Just after handshake. Requests create_session
+     *
      * @param session
      */
     @OnOpen
     public void onOpen(Session session) {
+        if (connected) {
+            try {
+                session.close();
+            } catch (IOException ex) {
+                Logger.getLogger(WSClient.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            return;
+        }
         try {
             session_id = -1;
             current_transaction = -1;
@@ -60,6 +72,7 @@ public class WSClient {
             System.out.println("Wysylam: " + msg);
             session.getBasicRemote().sendText(msg);
             session_ws = session;
+            connected = true;
         } catch (IOException ex) {
             Logger.getLogger(WSClient.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -67,6 +80,7 @@ public class WSClient {
 
     /**
      * Called on incoming message
+     *
      * @param message
      * @throws PingPongException
      */
@@ -102,8 +116,8 @@ public class WSClient {
      */
     @OnError
     public void onError(Throwable t) {
-        System.out.println(t);
-        System.out.println("OnError");
+        //      System.out.println(t);
+        System.out.println("OnError: " + t);
         errno = 1;
         do_ping_loop = false;
     }
@@ -127,12 +141,15 @@ public class WSClient {
      */
     public static void close() throws IOException {
         session_id = -1;
-        session_ws.close();
+        if (session_ws != null && session_ws.isOpen()) {
+            session_ws.close();
+        }
     }
 
     /**
-     * Wait for create_session process complete
-     * @param timeout for creation in milliseconds
+     * Waits for create_session process complete
+     *
+     * @param timeout for create_session in milliseconds
      * @throws com.skorka.pingpong3.PingPongException
      *
      */
@@ -156,7 +173,33 @@ public class WSClient {
     }
 
     /**
+     * Waits for the connection to open
+     *
+     * @param timeout
+     * @throws PingPongException
+     */
+    public static void wait_for_connection(int timeout) throws PingPongException {
+        int t = timeout;
+        int dt = timeout / 10;
+        if (dt > 100) {
+            dt = 100;
+        }
+        while (!connected) {
+            try {
+                TimeUnit.MILLISECONDS.sleep(dt);
+                t = t - dt;
+            } catch (InterruptedException ex) {
+                Logger.getLogger(WSClient.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            if (t <= 0) {
+                throw new PingPongException("Przekroczony czas na polaczenie");
+            }
+        }
+    }
+
+    /**
      * The main program loop
+     *
      * @param interval of ping requests
      * @throws PingPongException
      */
@@ -181,5 +224,4 @@ public class WSClient {
             throw new PingPongException("Exception w ping");
         }
     }
-
 }
