@@ -16,10 +16,6 @@ import javax.websocket.OnOpen;
 import javax.websocket.Session;
 import org.json.JSONObject;
 
-/**
- *
- * @author skorka
- */
 @ClientEndpoint
 public class WSClient {
 
@@ -60,6 +56,7 @@ public class WSClient {
             return;
         }
         try {
+            connected = true;
             session_id = -1;
             current_transaction = -1;
             transaction_id = 0;
@@ -72,10 +69,11 @@ public class WSClient {
             System.out.println("Wysylam: " + msg);
             session.getBasicRemote().sendText(msg);
             session_ws = session;
-            connected = true;
+
             System.err.println("polaczylem");
         } catch (IOException ex) {
             Logger.getLogger(WSClient.class.getName()).log(Level.SEVERE, null, ex);
+            connected = false;
         }
     }
 
