@@ -55,7 +55,7 @@
                     <archive>
                         <manifest>
                             <addClasspath>true</addClasspath>
-                            <mainClass>com.skorka.pingpong3.PingPong3</mainClass>
+                            <mainClass>com.skorka.pingpong3.Main</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>
