@@ -48,17 +48,18 @@ public class Main {
         try {
             pingpong.connect(3, uri);
         } catch (PingPongException ex) {
-            System.out.println(ex.toString());
+            System.out.println(ex);
             return;
         }
 
-        int retry = 1;
+        int retry = 2;
+
         while (retry >= 0) {
             try {
                 pingpong.ping(ping_interval);
                 retry = -2;
             } catch (PingPongException e) {
-                System.out.println(e.toString());
+                System.out.println(e);
                 try {
                     pingpong.close();
                 } catch (IOException ex) {
@@ -67,14 +68,26 @@ public class Main {
                 retry--;
                 if (retry >= 0)
                     try {
+                    pingpong = new PingPong3();
                     pingpong.connect(0, uri);
                 } catch (PingPongException ex) {
-                    System.out.println(ex.toString());
+                    System.out.println(ex);
                 }
             }
         }
         if (retry == -1) {
             System.out.println("Drugi blad w komunikacji. Koniec.");
         }
+        /*        
+        while(true)
+        {
+            try {
+                TimeUnit.SECONDS.sleep(1);
+            } catch (InterruptedException ex) {
+                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            
+        }
+         */
     }
 }

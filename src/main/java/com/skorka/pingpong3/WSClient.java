@@ -44,24 +44,25 @@ public class WSClient {
      * Just after handshake. Requests create_session
      *
      * @param session
+     * @throws IOException and catches in onError
      */
     @OnOpen
-    public void onOpen(Session session) {
+    public void onOpen(Session session) throws IOException {
+        System.out.println("onOpen" + session);
         if (connected) {
             try {
                 session.close();
             } catch (IOException ex) {
                 Logger.getLogger(WSClient.class.getName()).log(Level.SEVERE, null, ex);
             }
-            return;
-        }
-        try {
+        } else {
             connected = true;
             session_id = -1;
             current_transaction = -1;
             transaction_id = 0;
             do_ping_loop = true;
             session_ws = null;
+
             JSONObject req = new JSONObject();
             req.put("request", "create_session");
             req.put("transaction_id", get_next_transaction_id());
@@ -70,10 +71,7 @@ public class WSClient {
             session.getBasicRemote().sendText(msg);
             session_ws = session;
 
-            System.err.println("polaczylem");
-        } catch (IOException ex) {
-            Logger.getLogger(WSClient.class.getName()).log(Level.SEVERE, null, ex);
-            connected = false;
+            System.out.println("polaczylem");
         }
     }
 
@@ -91,7 +89,8 @@ public class WSClient {
 
             int ans_id = ans.getInt("transaction_id");
             if (ans_id != transaction_id) {
-                throw new PingPongException("Zly numer transakcji");
+                System.err.println("Zly numer transakcji dostalem " + ans_id + " czekam na " + transaction_id);
+                //throw new PingPongException("Zly numer transakcji");
             }
             if (session_id == -1) {
                 session_id = ans.getInt("session_id");
@@ -119,6 +118,7 @@ public class WSClient {
         System.out.println("OnError: " + t);
         errno = 1;
         do_ping_loop = false;
+        connected = false;
     }
 
     /**
@@ -140,6 +140,7 @@ public class WSClient {
      */
     public void close() throws IOException {
         session_id = -1;
+        connected = false;
         if (session_ws != null && session_ws.isOpen()) {
             session_ws.close();
         }
